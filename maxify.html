@@ -1,0 +1,47 @@
+<body>
+<script>
+  ///begin dom indexer
+/*function decode(src){
+  var props = {};
+  function hash(str){ //TODO: make up something with few collisions
+    for(var i = str.length, sum = 0; i--;){
+      sum += str.charCodeAt(i) * (str.length << i*2);
+    }
+    return (Math.abs(sum)%1679616).toString(36);
+  }
+
+  function checkProp(o){
+    if(!o || (!o.call && typeof(o) != 'object')) return;
+    for(var p = Object.getOwnPropertyNames(o), l = p.length; l--;)
+      props[hash(p[l])] = p[l];
+  }
+  checkProp(window);
+
+  for(var i in props){
+    var o = window[props[i]];
+    if(typeof o == 'function') checkProp(o.prototype);
+    checkProp(o);
+  }
+  
+  return src.replace(/\w+/g, function(a){
+      return props[a] || a; //the encoder
+    });
+}*/
+
+
+function decode(i){function d(a){if(!(!a||!a.call&&typeof a!="object")){a=Object.getOwnPropertyNames(a);for(var e=a.length;e--;){var j=c,b;b=a[e];for(var f=b.length,h=0;f--;)h+=b.charCodeAt(f)*(b.length<<f*2);b=(Math.abs(h)%1679616).toString(36);j[b]=a[e]}}}var c={};d(window);for(var k in c){var g=window[c[k]];typeof g=="function"&&d(g.prototype);d(g)}return i.replace(/\w+/g,function(a){return c[a]||a})};
+
+  //end dom indexer
+
+  setInterval(function(){
+    var src = document.getElementById('in').value;
+    var out = decode(src);
+    
+    var olen = src.length, nlen = out.length;
+    out = '/* Approximate output size: '+nlen + '/' +olen +' ('+(nlen/olen)+'%) */\n\n' + out
+    document.getElementById('out').value = out;
+  },1000);
+</script>
+<textarea id="in" style="width:50%;height:100%;position:absolute;border:0;left:0;top:0;margin:0;padding:0"></textarea>
+<textarea id="out" style="width:50%;height:100%;position:absolute;border:0;right:0;top:0;margin:0;padding:0;background-color:#dddddd" readonly></textarea>
+</body>
