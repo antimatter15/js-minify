@@ -1,40 +1,13 @@
 <body>
+<script src="i2.js"></script>
 <script>
-  ///begin dom indexer
-  var nIf = document.createElement('iframe');
-  document.body.appendChild(nIf);
-  var props = {};
-  hash = function(str){ //TODO: make up something with few collisions
-    for(var i = str.length, sum = 0; i--;){
-      sum += str.charCodeAt(i) * (str.length << i*2);
-    }
-    return (Math.abs(sum)%1679616).toString(36);
-  }
-
-  function checkProp(o){
-    var to = typeof o;
-    if(!o || (to != 'function' && to != 'object') || o == window) return;
-    for(var p = Object.getOwnPropertyNames(o), l = p.length; l--;)
-      if(!(p[l] in props) && p[l].length > 5 && /[a-z]\w+/.test(p[l]))
-        props[p[l]] = hash(p[l]);
-  }
-  checkProp(nIf.contentWindow);
-
-  for(var i in props){
-    var o = nIf.contentWindow[i];
-    if(typeof o == 'function') checkProp(o.prototype);
-    checkProp(o);
-  }
-  document.body.removeChild(nIf);
-  //end dom indexer
 
   setInterval(function(){
     var src = document.getElementById('in').value;
-    var out = '';
-
-    out = src.replace(/\w+/g, function(a){
-      return props[a] || a; //the encoder
-    });
+    var out = src;
+    for(var i in dreams)
+      out = out.replace(new RegExp(dreams[i], 'g'), i);
+    
     
     var olen = src.length, nlen = out.length;
     out = '/* Approximate output size: '+nlen + '/' +olen +' ('+(nlen/olen)+'%) */\n\n' + out

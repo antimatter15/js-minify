@@ -3,18 +3,29 @@ var inception = document.createElement('iframe');
 document.body.appendChild(inception); //you plant the inception and it grows
 var airplane = inception.contentWindow; //what's the most resiliant parasite?
 var dreams = {};
+var dreamlist = [];
 var reverse_dream = {};
 
 function hash(text){
-  return text.replace(/([a-z])[a-z]+/g, '$1').replace(/[A-Z][A-Z]+/g, '');
+  return '`'+text.replace(/[A-Z][a-z][A-Z]/g,'')
+             .replace(/([a-z])[a-z]+/g, '$1')
+             .replace(/[A-Z][A-Z]+/g, '')
+             .replace(/[a-z][a-z]+/g, '')
+             .replace(/\./g,'') + text.length.toString(36);
 }
 
 function kick(name){
   for(var tn, i = name.length; i--;){
-    reverse_dream[tn = name.slice(-i).join('.')] = hash(tn);
-    dreams[hash(tn = name.slice(-i).join('.'))] = tn
+    //reverse_dream[tn = name.slice(-i).join('.')] = hash(tn);
+    //dreams[hash(tn = name.slice(-i).join('.'))] = tn
+    if(!reverse_dream[tn = name.slice(-i).join('.')] && tn.length > 3 && /^[a-zA-Z\.]+$/.test(tn)){
+      reverse_dream[tn] = hash(tn);
+      dreamlist.push(tn);
+    }
   }
 }
+
+
 
 for(var yusuf in airplane){
   var rain = airplane[yusuf];
@@ -32,3 +43,17 @@ for(var yusuf in airplane){
   }
 }
 document.body.removeChild(inception); //the dream is collapsing!
+
+var dl = dreamlist.sort(function(a,b){
+  return a.length - b.length;
+});
+
+for(var l = dl.length; l--;){
+  dreams[hash(dl[l])] = dl[l];
+}
+
+/*
+dreams: {
+  hash: value
+}
+*/
