@@ -7,7 +7,7 @@ var dreamlist = [];
 var reverse_dream = {};
 
 function hash(text){
-  return '`'+text.replace(/[A-Z][a-z][A-Z]/g,'')
+  return '$'+text.replace(/[A-Z][a-z][A-Z]/g,'')
              .replace(/([a-z])[a-z]+/g, '$1')
              .replace(/[A-Z][A-Z]+/g, '')
              .replace(/[a-z][a-z]+/g, '')

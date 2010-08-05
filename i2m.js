@@ -27,7 +27,7 @@
     }
   }
   airplane.maxify = function(str){
-    return str.replace(/\`(\w+)/g, function(c,d){
+    return str.replace(/\$(\w+)/g, function(c,d){
       return dreams[d]
     })
   }
