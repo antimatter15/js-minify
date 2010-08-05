@@ -12,19 +12,19 @@ replace stuff in the dictionary and that expands the file.
 
 Now, lets analyze what parts of a typical block of code that can and can't be optimized.
 
-  function svg(el, prop){
-    if(typeof el == 'string') el = document.createElementNS('http://whateversvgnsthisis.blah', el);
-    for(var i in prop){
-      el.setAttribute(i, prop[i]);
+    function svg(el, prop){
+      if(typeof el == 'string') el = document.createElementNS('http://whateversvgnsthisis.blah', el);
+      for(var i in prop){
+        el.setAttribute(i, prop[i]);
+      }
+      return el;
     }
-    return el;
-  }
 
 
 Compilers nowadays, my favorite is Closure, can rewrite local variables to be shorter and do some general optimizations.
 like getting rid of the {} when they're unnecessary. Here's the post-closure code.
 
-function svg(a,b){if(typeof a=="string")a=document.createElementNS("http://whateversvgnsthisis.blah",a);for(var c in b)a.setAttribute(c,b[c]);return a};
+    function svg(a,b){if(typeof a=="string")a=document.createElementNS("http://whateversvgnsthisis.blah",a);for(var c in b)a.setAttribute(c,b[c]);return a}
 
 It's nice and concise. The parts that aren't obfuscated are: typeof, "string", document.createElementNS, setAttribute, for, and return.
 
@@ -35,41 +35,10 @@ In this minifier, the dictionary isn't transmitted. Instead, it's computed by th
 2 levels below window and sticks it in a hash table with a crappy simple hash function and the full expanded value. Just do a .replace() to 
 encode and another to decode. Simple enough.
 
+It gets compiled to:
 
-You might ask, what if there's a case where a function is implemented on the encoding side but not the decoding side? If i'm doing a feature
-test for document.querySelectorAll, what if that's not indexable by the client. Well, you would do feature detection code like
+    function svg(a,b){if($t4of a=="string")a=$dcElo("http://whateversvgnsthisis.blah",a);for(var c in b)a.$sAtc(c,b[c]);return a}
+    
+You can see that `typeof` gets mapped to `$t4of` and document.createElementNS gets mapped to `$dcElo` and setAttribute gets mapped to `$sAtc`
 
-  if(document.querySelectorAll){
-    var el = document.querySelectorAll('#node .cheese');
-  }else{
-    var all_el = document.getElementsByTagName('*');
-    for(var l = all_el.length; l--;){
-      //la la la la
-    }
-  }
-
-
-In the mean time, it gets translated to 
-
-  if(vb0g.gi1c){
-    var el = vb0g.gi1c('#node .cheese');
-  }else{
-    var all_el = vb0g.qwck('*');
-    for(var l = all_el.ink0; l--;){
-      //la la la la
-    }
-  }
-
-But if you're in a legacy browser (this won't be the case as legacy browsers don't support getOwnProperties anyway). It'll get translated to.
-
-  if(document.gi1c){
-    var el = document.gi1c('#node .cheese');
-  }else{
-    var all_el = document.getElementsByTagName('*');
-    for(var l = all_el.length; l--;){
-      //la la la la
-    }
-  }
-
-
-If document.querySelectorAll is undefined, so is document.gi1c, feature detection code works fine.
+How great are the savings? Sadly, not that great. Interesting experiment anyway.
