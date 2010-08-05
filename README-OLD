@@ -1,0 +1,107 @@
+This is an experimental ES5 based prototype minifier experiment.
+
+First, some warnings. It requires a ES5-only feature, specifically, Object.getOwnPropertyNames.
+
+The reason why it needs it will be clearer when I explain what this is.
+
+But first, for what a minifier is in the first place. Minifiers are compressors. They reduce entropy.
+There are different ways to reduce entropy. There are lossy and lossless compression systems. Stripping
+whitespace is lossy, as the original whitespace really can't be recovered with certainty. Encoding with
+LZ77 is lossless as the code that gets eval'd is bit-for-bit equivalent to the source.
+
+One way of reducing entropy is by creating a dictionary, as what lz77 and pretty much what huffman coding
+does as well. You create a dictionary of commonly occuring phrases and stick it somewhere. To decode, you 
+replace stuff in the dictionary and that expands the file.
+
+Now, lets analyze what parts of a typical block of code that can and can't be optimized.
+
+  function svg(el, prop){
+    if(typeof el == 'string') el = document.createElementNS('http://whateversvgnsthisis.blah', el);
+    for(var i in prop){
+      el.setAttribute(i, prop[i]);
+    }
+    return el;
+  }
+
+
+Compilers nowadays, my favorite is Closure, can rewrite local variables to be shorter and do some general optimizations.
+like getting rid of the {} when they're unnecessary. Here's the post-closure code.
+
+function svg(a,b){if(typeof a=="string")a=document.createElementNS("http://whateversvgnsthisis.blah",a);for(var c in b)a.setAttribute(c,b[c]);return a};
+
+It's nice and concise. The parts that aren't obfuscated are: typeof, "string", document.createElementNS, setAttribute, for, and return.
+
+A simple dictionary coder could get rid of the function, for, if and return overhead. It could also get rid of document.creatElementNS, but it would
+still at some point need to include that in it's dictionary.
+
+In this minifier, the dictionary isn't transmitted. Instead, it's computed by the DOM Indexer. The DOM Indexer iterates through all properties
+2 levels below window and sticks it in a hash table with a crappy simple hash function and the full expanded value. Just do a .replace() to 
+encode and another to decode. Simple enough.
+
+
+You might ask, what if there's a case where a function is implemented on the encoding side but not the decoding side? If i'm doing a feature
+test for document.querySelectorAll, what if that's not indexable by the client. Well, you would do feature detection code like
+
+  if(document.querySelectorAll){
+    var el = document.querySelectorAll('#node .cheese');
+  }else{
+    var all_el = document.getElementsByTagName('*');
+    for(var l = all_el.length; l--;){
+      //la la la la
+    }
+  }
+
+
+In the mean time, it gets translated to 
+
+  if(vb0g.gi1c){
+    var el = vb0g.gi1c('#node .cheese');
+  }else{
+    var all_el = vb0g.qwck('*');
+    for(var l = all_el.ink0; l--;){
+      //la la la la
+    }
+  }
+
+But if you're in a legacy browser (this won't be the case as legacy browsers don't support getOwnProperties anyway). It'll get translated to.
+
+  if(document.gi1c){
+    var el = document.gi1c('#node .cheese');
+  }else{
+    var all_el = document.getElementsByTagName('*');
+    for(var l = all_el.length; l--;){
+      //la la la la
+    }
+  }
+
+
+If document.querySelectorAll is undefined, so is document.gi1c, feature detection code works fine.
+
+Issues: The hash function.
+
+There's no space for SHA1, MD5 or any fancy cryptographic one. And it would also be pretty superfluous. All we need is a checksum that yields unique
+results. As few collisions as possible.
+
+Why do we actually need a hash function? LZ77 encoders don't, they just count results. Well, this can't work with counts because the value needs
+to be the same for all browsers. If it's just a count, different browsers implement different properties. It couldn't work. So that's why I invented
+the super duper crappy hash function.
+
+  hash = function(str){ //TODO: make up something with few collisions
+    for(var i = str.length, sum = 0; i--;)
+      sum += str.charCodeAt(i) * (str.length << i*2);
+    return (Math.abs(sum)%1679616).toString(36);
+  }
+
+So it loops through a string backwards, and for each character, it gets the ascii value and it does some freaky operator arithmetic and then
+finally finds the absolute value of the sum and takes the modulo of 36*36*36*36 and makes it a base 36 string.
+
+Why is it like this? Bram Cohen once said that BitTorrent used lots of important magical numbers, and that he pulled them out of his very magical
+ass. This is exactly the same thing. I made a function and tested it a lot and looked for one which had no collisions. This just happened to be the 
+first.
+
+
+But there's only ~1600 properties. 4 characters at base 36 gives you 1,679,616 possibilities. That's almost exactly 100x as much entropy as I need.
+It gets wasted because hash functions aren't counting functions and that mine isn't as magical as it could be or I care for it to be.
+
+
+Actual savings. Not much. Basically, if you have a DOM method > 5 characters, it gets stripped down to four. That's not that great.
