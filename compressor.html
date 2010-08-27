@@ -1,0 +1,25 @@
+<canvas id="c"></canvas>
+<script>
+(function(){
+document.body.innerHTML='<textarea style="width:90%;height:40%" id="t"></textarea><textarea style="width:90%;height:40%;background:lightgray" id="o" readonly></textarea>'
+var t = document.getElementById('t');
+var o = document.getElementById('o');
+setInterval(function(){
+  var s = t.value.match(/\w+/g);
+  var p = '', m = {}
+  var k = t.value.replace(/\.\w+/g, function(a){
+    if(m[a]) return m[a];
+    if(t.value.split(a).length > 2){
+      for(var i = 65,z; i < 65+26 && s.indexOf(z=String.fromCharCode(i)) != -1; i++){}
+      s.push(z);
+      m[a]='['+z+']';
+      p+=z+'="'+a.slice(1)+'",';
+      return m[a]
+    }
+    return a;
+  })
+  o.value=(p&&('var '+p.slice(0,-1)+';'))+k;
+},1000);
+t.value=(arguments.callee+'').slice(13,-1);
+})()
+</script>
